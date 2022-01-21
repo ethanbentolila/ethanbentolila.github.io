@@ -1,0 +1,14 @@
+{
+  "name": "ice2",
+  "version": "1.0.0",
+  "description": "ICE 2 for WEBD6201 in the Winter 2022 Semester",
+  "main": "index.js",
+  "author": "Ethan Bentolila",
+  "license": "MIT",
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "^5.15.4",
+    "@popperjs/core": "^2.11.2",
+    "bootstrap": "^5.1.3",
+    "jquery": "^3.6.0"
+  }
+}
