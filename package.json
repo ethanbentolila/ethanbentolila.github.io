@@ -1,7 +1,7 @@
 {
-  "name": "ice2",
+  "name": "ice3",
   "version": "1.0.0",
-  "description": "ICE 2 for WEBD6201 in the Winter 2022 Semester",
+  "description": "ICE 3 for WEBD6201 in the Winter 2022 Semester",
   "main": "index.js",
   "author": "Ethan Bentolila",
   "license": "MIT",
