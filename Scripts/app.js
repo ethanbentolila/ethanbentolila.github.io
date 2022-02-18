@@ -3,6 +3,47 @@
 (function()
 {
 
+    /**
+     * This method uses AJAX to open a connection to the url and returns data to the callback function
+     * @param {string} method 
+     * @param {string} url 
+     * @param {function} callback 
+     */
+    function AjaxRequest(method, url, callback)
+    {
+        //Step 1 - instantiate an XHR object
+        let XHR = new XMLHttpRequest();
+
+        //Step 2 - create an event listener / handler for readystatechange event
+        XHR.addEventListener("readystatechange", () =>
+        {
+            if(XHR.readyState === 4 && XHR.status === 200) 
+            {
+                callback(XHR.responseText);
+            }
+        });
+
+        //Step 3 - Open a connection to the server
+        XHR.open(method, url);
+
+        //Step 4 - send the request to the server
+        XHR.send();
+    }
+
+
+    /**
+     * This function loads the NavBar from the header file and injects it into the page
+     * @param {string} data 
+     */
+    function LoadHeader(data) 
+    {
+        $("header").html(data); // data payload
+        $(`li>a:contains('${document.title}')`).addClass("active"); //adds a class of 'active'
+        CheckLogin();
+
+    }
+
+
     function DisplayAboutPage()
     {       
          console.log("About Page");
@@ -24,82 +65,13 @@
 
         console.log("Home Page");
 
-        // 1) Fattest memory footprint - we need the jquery library
-        //J Query way - will do this for all buttons with AboutUsButton ID.
-        // $("#AboutUsButton").on("click", function() {
-        //     location.href = "about.html";
-        // });
 
-        // 2) Second Fattest memory footprint - we're getting stuff we don't need
-        // JavaScript way - returns all elements with this id
-        // document.querySelectorAll("#AboutUsButton").forEach(function(element) {
-        //     //attach event listener to each element in the collection
-        //     element.addEventListener("click", function() {
-        //         location.href = "about.html";
-        //     })
-        // });
-
-
-
-        //3) pretty lean - this is a query, 4 is a target
         document.querySelector("#AboutUsButton").addEventListener("click", function() {
             location.href = "about.html";
 
         })
-
-
-        // 4)  leanest - Native JS - only returning a reference to the object required to add the "click" event.
-        // document.getElementById("AboutUsButton").addEventListener("click", function(){
-        //         location.href = "about.html";
-        // });
-
-
-        //Old way 
-        //  let AboutUsButton = document.getElementById("AboutUsButton");
-        // AboutUsButton.addEventListener("click",function()
-        // {
-        //     //redirects to about page 
-        // });
-
-    
-
-
-        //Step 1 get reference to an entry point(s) (insertion point/ deletion point)
-        //let Maincontent = document.getElementsByTagName("main")[0];
-        //let DocumentBody = document.body;
-
-        //Step 2 create an element(s) to insert
-        //let MainParagraph = document.createElement("p");
-        //let Article = document.createElement("article");
-       // let ArticleParagraph = `<p id="ArticleParagraph" class=""mt-3">This is the article paragraph</p>`;
-
-        //Step 3 configure new element
-       // MainParagraph.setAttribute("id", "Main Paragraph");
-       // MainParagraph.setAttribute("class", "mt-3");
-
-        //let FirstParagraphString = "This is";
-        //Example of Template string
-       // let SecondParagraphString = `${FirstParagraphString} the Main Paragraph`;
-
-       // MainParagraph.textContent = SecondParagraphString;
-        //Article.setAttribute("class","container");
-
-        //Step 4 add / insert new element
-        //Maincontent.appendChild(MainParagraph);
-        
         $("main").append(`<p id="MainParagraph" class="mt-3">This is the Main Paragraph</p>`);
-       // Article.innerHTML = ArticleParagraph;
         $("body").append(`<article class="container mt-3"><p id="ArticleParagraph" class=""mt-3">This is the Article Paragraph</p></article>`);
-
-        //Deletion example
-        //document.getElementById("ArticleParagraph").remove();
-        
-        //Insert Before example
-        // let NewH1 = document.createElement("h1");
-        // NewH1.setAttribute("class","display-1");
-        // NewH1.textContent = "Hello, World!";
-        // Maincontent.before(NewH1);
-
 
 
     }
@@ -182,6 +154,8 @@
 
     function DisplayContactListPage() 
     {
+
+
         if(localStorage.length > 0) //check if local storage has something in it
         {
             let contactList = document.getElementById("contactList");
@@ -301,18 +275,91 @@
                 }
                 break;
         }
-
-
     }
-
-
-
-
-
 
     function DisplayLoginPage() 
     {
         console.log("Login page");
+
+        let messageArea = $("#messageArea");
+        messageArea.hide();
+
+        $("#loginButton").on("click", function() 
+        {
+            let success = false;
+
+            //create an empty user object
+            let newUser = new core.User();
+
+            // use a jquery shortcut to load the users.json file 
+            $.get("./Data/users.json",function(data) 
+            {
+                //for every user in the users.json file. loop
+                for (const user of data.users) 
+                {
+                    //check if the username and password entered match with user
+                    if(username.value == user.Username && password.value == user.Password) 
+                    {
+                        //get the user data from the file and assign it to our user
+                        newUser.fromJSON(user);
+                        success = true;
+                        break;
+                    }
+                }
+
+                //if username and password matches - success... perform login sequence
+                if(success) 
+                {
+                    //add user to session storage
+                    sessionStorage.setItem("user", newUser.serialize());
+
+                    //hide any error messages
+                    messageArea.removeAttr("class").hide();
+
+                    //redirect user to secure site
+                    location.href = "contact-list.html";
+                }
+                else 
+                {
+                    //display an error message 
+                    $("#username").trigger("focus").trigger("select");
+                    messageArea.addClass("alert alert-danger").text("Error: Invalid Login Information").show();
+                }
+
+            });
+
+
+
+            $("#cancelButton").on("click", function ()
+            {
+                //clears the login form
+                document.forms[0].reset();
+                
+                //return to homepage
+                location.href = "index.html";
+            });
+        });
+    }
+
+    function CheckLogin()
+    {
+        // if user is logged in
+        if(sessionStorage.getItem("user"))
+        {
+            // swap out the login link for the logout link
+            $("#login").html(
+                `<a id="logout" class="nav-link" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a>`
+            );
+
+            $("#logout").on("click", function()
+            {
+                // perform logout
+                sessionStorage.clear();
+
+                // redirect back to login
+                location.href = "login.html";
+            });
+        }
     }
 
 
@@ -321,16 +368,12 @@
         console.log("register page");
     }
 
-
-
-
-
-
     //Named function
     function Start() 
     {
         console.log("App Started!!");
 
+        AjaxRequest("GET", "header.html" , LoadHeader);
         switch(document.title) 
         {
             case "Home":
@@ -363,6 +406,7 @@
                         
             
         }
+
     }
     
     window.addEventListener("load", Start);
