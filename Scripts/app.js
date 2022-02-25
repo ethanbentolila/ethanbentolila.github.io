@@ -33,16 +33,43 @@
 
     /**
      * This function loads the NavBar from the header file and injects it into the page
-     * @param {string} data 
      */
-    function LoadHeader(data) 
+    function LoadHeader() 
     {
-        $("header").html(data); // data payload
-        $(`li>a:contains('${document.title}')`).addClass("active"); //adds a class of 'active'
-        CheckLogin();
+        $.get("./Views/components/header.html" , function(html_data) {
+            $("header").html(html_data); // data payload
+            
+            //capitalizing the active link and set the document title to a new string
+            document.title = router.ActiveLink.substring(0,1).toUpperCase() + router.ActiveLink.substring(1);
 
+            //TODO: this needs to be fixed
+            $(`li>a:contains('${document.title}')`).addClass("active"); //adds a class of 'active'
+            CheckLogin();
+        });
     }
 
+
+    //loads the content of the page
+    function LoadContent()
+    {
+        let page_name = router.ActiveLink; // alias
+        //returns a reference to the appropriate function
+        let callback = ActiveLinkCallBack();
+        $.get(`./Views/content/${page_name}.html` , function(html_data) {
+            $("main").html(html_data); // data payload
+
+           // ActiveLinkCallBack()();
+            callback();
+        });
+    }
+
+    //loads the footer of the page
+    function LoadFooter()
+    {
+        $.get("./Views/components/footer.html" , function(html_data) {
+            $("footer").html(html_data); // data payload
+        });
+    }
 
     function DisplayAboutPage()
     {       
@@ -67,7 +94,7 @@
 
 
         document.querySelector("#AboutUsButton").addEventListener("click", function() {
-            location.href = "about.html";
+            location.href = "/about";
 
         })
         $("main").append(`<p id="MainParagraph" class="mt-3">This is the Main Paragraph</p>`);
@@ -84,7 +111,7 @@
      * @param {string} emailAddress
      */
     function AddContact(fullName,contactNumber,emailAddress) {
-        let contact = new Core.Contact(fullName, contactNumber, emailAddress);
+        let contact = new core.Contact(fullName, contactNumber, emailAddress);
         if(contact.serialize()) {
             let key = contact.FullName.substring(0,1) + Date.now();
             localStorage.setItem(key, contact.serialize());
@@ -186,7 +213,7 @@
 
             $("#addButton").on("click", () =>
             {
-                location.href = "edit.html#add";
+                location.href = "/edit#add";
 
             });
 
@@ -195,13 +222,13 @@
                 if(confirm("Are you sure?")) {
                 localStorage.removeItem($(this).val());
                 }
-                location.href = "contact-list.html";
+                location.href = "/contact-list";
             });
 
 
             $("button.edit").on("click", function ()
             {
-                location.href = "edit.html#" + $(this).val();
+                location.href = "/edit#" + $(this).val();
             });
 
         }
@@ -227,12 +254,12 @@
                         //Add contact
                         AddContact(fullName.value,contactNumber.value,emailAddress.value);
                         //Refresh contact list page
-                        location.href = "contact-list.html";
+                        location.href = "/contact-list";
                     });
 
                     $("#cancelButton").on("click", () =>
                     {
-                        location.href = "contact-list.html";
+                        location.href = "/contact-list";
                     });
 
                 }
@@ -263,13 +290,13 @@
                         localStorage.setItem(page,contact.serialize());
 
                         //return to the contact list
-                        location.href = "contact-list.html";
+                        location.href = "/contact-list";
 
                     });
                     
                     $("#cancelButton").on("click", () =>
                     {
-                        location.href = "contact-list.html";
+                        location.href = "/contact-list";
                     })
 
                 }
@@ -317,7 +344,7 @@
                     messageArea.removeAttr("class").hide();
 
                     //redirect user to secure site
-                    location.href = "contact-list.html";
+                    location.href = "/contact-list";
                 }
                 else 
                 {
@@ -336,7 +363,7 @@
                 document.forms[0].reset();
                 
                 //return to homepage
-                location.href = "index.html";
+                location.href = "/home";
             });
         });
     }
@@ -357,7 +384,7 @@
                 sessionStorage.clear();
 
                 // redirect back to login
-                location.href = "login.html";
+                location.href = "/login";
             });
         }
     }
@@ -368,44 +395,49 @@
         console.log("register page");
     }
 
+    function Display404page()
+    {
+        
+    }
+
+    /**
+     * This function returns the callback function related to the active link
+     * @param {String} activeLink 
+     * @returns {function}
+     */
+    function ActiveLinkCallBack()
+    {
+        switch(router.ActiveLink)
+        {
+            case "home": return DisplayHomePage;
+            case "about": return DisplayAboutPage;
+            case "products": return DisplayProductsPage;
+            case "services": return DisplayServicesPage;
+            case "contact": return DisplayContactPage;
+            case "contact-list": return DisplayContactListPage;
+            case "edit": return DisplayEditPage;
+            case "login": return DisplayLoginPage;
+            case "register": return DisplayRegisterPage;
+            case "404": return Display404page;
+            default:
+                console.error("ERROR: callback does not exist: " + router.ActiveLink);
+        }
+    }
+
+
+
     //Named function
     function Start() 
     {
         console.log("App Started!!");
 
-        AjaxRequest("GET", "header.html" , LoadHeader);
-        switch(document.title) 
-        {
-            case "Home":
-                DisplayHomePage();
-                break;
-            case "Contact us":
-                DisplayContactPage();
-                break;
-            case "Contact-List":
-                DisplayContactListPage();
-                break;
-            case "About us":
-                DisplayAboutPage();
-                break;
-            case "Our Products":
-                DisplayProductsPage();
-                break;
-            case "Our Services":
-                DisplayServicesPage();
-                break;
-            case "Edit":
-                DisplayEditPage();
-                break;
-            case "Login":
-                DisplayLoginPage();
-                break;
-            case "Register":
-                DisplayRegisterPage();
-                break;
-                        
-            
-        }
+
+        LoadHeader();
+
+        LoadContent();
+
+        LoadFooter();
+
 
     }
     
